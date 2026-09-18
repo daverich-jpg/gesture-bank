@@ -1,0 +1,43 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+  --app-max: 430px;
+}
+
+* { -webkit-tap-highlight-color: transparent; }
+
+html, body, #root { height: 100%; }
+
+body {
+  margin: 0;
+  /* Flat black canvas with a faint neutral lift near the top */
+  background:
+    radial-gradient(120% 70% at 50% -15%, #141414 0%, #060606 50%, #000000 100%);
+  color: #F2F2F2;
+  font-family: 'Manrope', -apple-system, BlinkMacSystemFont, Inter, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  overscroll-behavior: none;
+  letter-spacing: -0.01em;
+}
+
+/* App stage: center a phone-sized column, block ancestor scroll */
+.stage {
+  height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom);
+}
+
+.hide-scroll::-webkit-scrollbar { display: none; }
+.hide-scroll { scrollbar-width: none; -ms-overflow-style: none; }
+
+/* Frosted hairline used across cards */
+.hair-t { box-shadow: inset 0 1px 0 rgba(255,255,255,0.05); }
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
+}
