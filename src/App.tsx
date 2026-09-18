@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { PhoneShell, StatusBar } from './components/PhoneShell'
+import { PhoneShell } from './components/PhoneShell'
 import { SpaceDock, type Space } from './components/SpaceDock'
 import { StoreProvider } from './data/store'
 import { AiProvider } from './ai/AiProvider'
@@ -27,7 +27,9 @@ export default function App() {
       <PhoneShell>
         <AiProvider>
           <div className="relative flex h-full flex-col">
-            <StatusBar />
+            {/* Top safe-area inset — clears the device's own status bar / notch.
+                No fake time/status bar: the OS renders the real one. */}
+            <div className="h-[max(14px,env(safe-area-inset-top))] shrink-0" />
             <div className="relative flex-1 overflow-hidden">
               {/* Keyed screen: changing `space` unmounts the old screen instantly
                   and animates the new one in. No exit overlap → no deadlock. */}
