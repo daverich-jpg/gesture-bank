@@ -8,6 +8,7 @@ import { naira } from '../lib/format'
 import { spring, settle } from '../lib/motion'
 import { haptic } from '../lib/haptics'
 import type { Txn, Category } from '../data/types'
+import { Coachmark } from '../onboarding/coach'
 
 const CATS: Category[] = ['food', 'transport', 'shopping', 'bills', 'subscription', 'health', 'transfer']
 
@@ -31,6 +32,15 @@ export function MoneyScreen() {
           </div>
         ))}
       </div>
+
+      <Coachmark
+        id="activity"
+        title="Your transactions are interactive"
+        body="Swipe a row left to recategorize it. Press & hold any row to ask Atlas about that purchase."
+        gesture="swipe"
+        place="bottom-[104px] inset-x-4"
+        arrow="none"
+      />
     </div>
   )
 }

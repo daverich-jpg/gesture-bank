@@ -8,6 +8,7 @@ import { naira, shortNaira } from '../lib/format'
 import { spring, settle } from '../lib/motion'
 import { haptic } from '../lib/haptics'
 import type { Goal } from '../data/types'
+import { Coachmark } from '../onboarding/coach'
 
 const STEPS = [5000, 10000, 25000, 50000]
 
@@ -124,6 +125,15 @@ export function SavingsScreen() {
           ))}
         </div>
       </div>
+
+      <Coachmark
+        id="spaces"
+        title="Save by dragging"
+        body="Pick an amount, then drag the green coin onto any goal to move money in. Hold a goal to ask Atlas how to reach it faster."
+        gesture="drag"
+        place="bottom-[104px] inset-x-4"
+        arrow="none"
+      />
     </div>
   )
 }

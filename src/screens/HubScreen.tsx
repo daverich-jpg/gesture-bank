@@ -1,5 +1,5 @@
 import { useRef, useState, useEffect } from 'react'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { useStore, spentThisMonth } from '../data/store'
 import { parseIntent, type Intent } from '../ai/intent'
 import { renderIntentCard } from '../ai/cards'
@@ -8,6 +8,7 @@ import { naira } from '../lib/format'
 import { spring } from '../lib/motion'
 import { haptic } from '../lib/haptics'
 import { AtlasMark, RobotMascot, IconSend, IconGrid } from '../components/icons'
+import { Coachmark } from '../onboarding/coach'
 
 interface Msg { id: string; role: 'user' | 'ai'; text?: string; intent?: Intent }
 
@@ -96,6 +97,15 @@ export function HubScreen() {
           </button>
         </div>
       </div>
+
+      <Coachmark
+        id="hub"
+        title="This is Atlas — your money assistant"
+        body="Tap a suggestion above, or type any request here — like “Send ₦20,000 to David” or “How much on food this month?”"
+        gesture="type"
+        place="bottom-[184px] inset-x-4"
+        arrow="down"
+      />
     </div>
   )
 }
@@ -107,13 +117,39 @@ function balanceDigits(amount: number) {
 }
 
 function HealthPill({ score }: { score: number }) {
+  const [open, setOpen] = useState(false)
   const tone = score > 70 ? 'text-accent' : score > 45 ? 'text-amber-300' : 'text-negative'
   const dot = score > 70 ? 'bg-accent' : score > 45 ? 'bg-amber-300' : 'bg-negative'
   return (
-    <div className="flex items-center gap-1.5 rounded-full bg-white/[0.05] px-3 py-1.5 ring-1 ring-white/[0.06]">
-      <span className={`h-1.5 w-1.5 rounded-full ${dot}`} />
-      <span className={`text-[12px] font-bold ${tone}`}>{score}</span>
-      <span className="text-[11px] text-white/40">health</span>
+    <div className="relative">
+      <button
+        onClick={() => { haptic('tap'); setOpen((o) => !o) }}
+        className="flex items-center gap-1.5 rounded-full bg-white/[0.05] px-3 py-1.5 ring-1 ring-white/[0.06] active:bg-white/[0.08]"
+        aria-label="What does the health score mean?"
+        aria-expanded={open}
+      >
+        <span className={`h-1.5 w-1.5 rounded-full ${dot}`} />
+        <span className={`text-[12px] font-bold ${tone}`}>{score}</span>
+        <span className="text-[11px] text-white/40">health</span>
+      </button>
+      <AnimatePresence>
+        {open && (
+          <>
+            <div className="fixed inset-0 z-20" onClick={() => setOpen(false)} />
+            <motion.div
+              initial={{ opacity: 0, y: -6, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -6, scale: 0.98 }}
+              transition={spring.crisp}
+              className="absolute right-0 top-[calc(100%+8px)] z-30 w-60 rounded-2xl border border-white/10 bg-[#161616] p-3 text-left shadow-float"
+            >
+              <p className="text-[12.5px] leading-relaxed text-white/70">
+                <b className="text-white">Financial health · {score}/100.</b> A quick read on how your spending compares to your balance — higher is healthier. Ask Atlas “how can I improve this?” anytime.
+              </p>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   )
 }

@@ -8,6 +8,7 @@ import { motion } from 'framer-motion'
 import { spring } from '../lib/motion'
 import type { Category } from '../data/types'
 import { AtlasMark } from '../components/icons'
+import { Coachmark } from '../onboarding/coach'
 
 export function InsightsScreen() {
   const { state } = useStore()
@@ -91,6 +92,15 @@ export function InsightsScreen() {
           </div>
         </InsightShell>
       </div>
+
+      <Coachmark
+        id="insights"
+        title="Your money, explained"
+        body="These are Atlas’s read on your spending. Tap a card to see the full breakdown, or hold one to ask about it."
+        gesture="tap"
+        place="bottom-[104px] inset-x-4"
+        arrow="none"
+      />
     </div>
   )
 }
