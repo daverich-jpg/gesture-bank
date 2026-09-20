@@ -62,6 +62,15 @@ export function parseIntent(text: string, state: AccountState): Intent {
   // Transfer
   if (/\b(send|transfer|pay|move.*to\s+[a-z]+)\b/.test(t) && !/savings|goal/.test(t)) {
     const to = findName(text)
+    if (amount && to && amount > state.available) {
+      return {
+        kind: 'clarify',
+        answer: state.available === 0
+          ? `You'll need to add money first — your balance is ₦0. Tap "Add money" on your home screen to get started.`
+          : `That's more than you have available (${naira(state.available)}). Add money or try a smaller amount.`,
+        suggestions: [],
+      }
+    }
     if (amount && to) {
       return {
         kind: 'transfer',

@@ -9,38 +9,57 @@ import { spring, settle } from '../lib/motion'
 import { haptic } from '../lib/haptics'
 import type { Txn, Category } from '../data/types'
 import { Coachmark } from '../onboarding/coach'
+import { EmptyState } from '../components/EmptyState'
+import { IconTrend } from '../components/icons'
 
 const CATS: Category[] = ['food', 'transport', 'shopping', 'bills', 'subscription', 'health', 'transfer']
 
-export function MoneyScreen() {
+export function MoneyScreen({ onNavigate: _onNavigate }: { onNavigate?: (s: 'hub' | 'money' | 'savings' | 'insights') => void }) {
   const { state } = useStore()
+  const ai = useAi()
   const groups = useMemo(() => groupByDay(state.txns), [state.txns])
+  const empty = state.txns.length === 0
 
   return (
     <div className="flex h-full flex-col">
       <div className="px-6 pt-3 pb-4">
         <h1 className="text-[30px] font-extrabold text-white tracking-tight">Activity</h1>
-        <p className="mt-1 text-[13px] text-white/40">Swipe any item to recategorize · hold to ask Atlas</p>
-      </div>
-      <div className="hide-scroll flex-1 overflow-y-auto px-4 pb-[100px]">
-        {groups.map(([day, items]) => (
-          <div key={day} className="mb-5">
-            <p className="px-2 pb-2.5 text-[11px] font-semibold uppercase tracking-widest text-white/35">{day}</p>
-            <div className="space-y-2.5">
-              {items.map((t) => <TxnRow key={t.id} t={t} />)}
-            </div>
-          </div>
-        ))}
+        <p className="mt-1 text-[13px] text-white/40">
+          {empty ? 'A running record of every naira in and out' : 'Swipe any item to recategorize · hold to ask Atlas'}
+        </p>
       </div>
 
-      <Coachmark
-        id="activity"
-        title="Your transactions are interactive"
-        body="Swipe a row left to recategorize it. Press & hold any row to ask Atlas about that purchase."
-        gesture="swipe"
-        place="bottom-[104px] inset-x-4"
-        arrow="none"
-      />
+      {empty ? (
+        <EmptyState
+          icon={<IconTrend size={26} className="text-accent" />}
+          title="No activity yet"
+          body="Every payment, transfer and top-up lands here — tap to inspect, swipe to recategorize, or hold to ask Atlas. Add money to see your first entry."
+          cta="Add money"
+          onCta={ai.addMoney}
+        />
+      ) : (
+        <div className="hide-scroll flex-1 overflow-y-auto px-4 pb-[100px]">
+          {groups.map(([day, items]) => (
+            <div key={day} className="mb-5">
+              <p className="px-2 pb-2.5 text-[11px] font-semibold uppercase tracking-widest text-white/35">{day}</p>
+              <div className="space-y-2.5">
+                {items.map((t) => <TxnRow key={t.id} t={t} />)}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {!empty && (
+        <Coachmark
+          id="activity"
+          title="Your transactions are interactive"
+          body="Swipe a row left to recategorize it. Press & hold any row to ask Atlas about that purchase."
+          gesture="swipe"
+          place="bottom-[104px] inset-x-4"
+          arrow="none"
+        />
+      )}
     </div>
   )
 }

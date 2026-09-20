@@ -1,6 +1,7 @@
 import { useRef, useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { useStore, spentThisMonth } from '../data/store'
+import { useStore, spentThisMonth, gettingStarted } from '../data/store'
+import type { Space } from '../components/SpaceDock'
 import { parseIntent, type Intent } from '../ai/intent'
 import { renderIntentCard } from '../ai/cards'
 import { useAi } from '../ai/AiProvider'
@@ -14,12 +15,13 @@ interface Msg { id: string; role: 'user' | 'ai'; text?: string; intent?: Intent 
 
 const STARTERS = ['Send ₦20,000 to David', 'How much on food this month?', 'Move 10% into savings', 'Can I afford ₦150,000?']
 
-export function HubScreen() {
+export function HubScreen({ onNavigate }: { onNavigate?: (s: Space) => void }) {
   const { state } = useStore()
   const ai = useAi()
   const [thread, setThread] = useState<Msg[]>([])
   const [input, setInput] = useState('')
   const scroller = useRef<HTMLDivElement>(null)
+  const gs = gettingStarted(state)
 
   useEffect(() => {
     scroller.current?.scrollTo({ top: scroller.current.scrollHeight, behavior: 'smooth' })
@@ -39,11 +41,11 @@ export function HubScreen() {
   }
 
   const spent = spentThisMonth(state)
-  const health = Math.round(100 - (spent / state.balance) * 100)
+  const health = state.balance > 0 ? Math.round(100 - (spent / state.balance) * 100) : 0
 
   return (
     <div className="flex h-full flex-col">
-      {/* Header: greeting + health */}
+      {/* Header: greeting + (health, once funded) */}
       <div className="px-6 pt-1">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -52,7 +54,7 @@ export function HubScreen() {
             </span>
             <p className="text-[17px] font-bold text-white tracking-tight">Good morning David</p>
           </div>
-          <HealthPill score={health} />
+          {gs.funded && <HealthPill score={health} />}
         </div>
 
         <div className="mt-6 flex items-baseline gap-1.5">
@@ -61,19 +63,23 @@ export function HubScreen() {
             {balanceDigits(state.available)}
           </p>
         </div>
-        <p className="mt-3 text-[13px] text-white/40">Available · {naira(state.balance)} total</p>
+        <p className="mt-3 text-[13px] text-white/40">
+          {gs.funded ? `Available · ${naira(state.balance)} total` : 'Your balance — add money to get started'}
+        </p>
       </div>
 
-      {/* Conversation / proactive area */}
+      {/* Conversation / first-run / proactive area */}
       <div ref={scroller} className="hide-scroll mt-5 flex-1 overflow-y-auto px-4 pb-3">
-        {thread.length === 0 ? (
-          <ProactiveIntro onPick={send} spent={spent} />
-        ) : (
+        {thread.length > 0 ? (
           <div className="space-y-3">
             {thread.map((m) => (
               <MessageBubble key={m.id} msg={m} onTransfer={ai.requestTransfer} onRefine={send} />
             ))}
           </div>
+        ) : gs.done ? (
+          <ProactiveIntro onPick={send} spent={spent} />
+        ) : (
+          <GettingStarted gs={gs} onAddMoney={ai.addMoney} onNavigate={onNavigate} onPick={send} />
         )}
       </div>
 
@@ -98,14 +104,79 @@ export function HubScreen() {
         </div>
       </div>
 
-      <Coachmark
-        id="hub"
-        title="This is Atlas — your money assistant"
-        body="Tap a suggestion above, or type any request here — like “Send ₦20,000 to David” or “How much on food this month?”"
-        gesture="type"
-        place="bottom-[184px] inset-x-4"
-        arrow="down"
-      />
+      {gs.done && (
+        <Coachmark
+          id="hub"
+          title="This is Atlas — your money assistant"
+          body="Tap a suggestion above, or type any request here — like “Send ₦20,000 to David” or “How much on food this month?”"
+          gesture="type"
+          place="bottom-[184px] inset-x-4"
+          arrow="down"
+        />
+      )}
+    </div>
+  )
+}
+
+function GettingStarted({
+  gs, onAddMoney, onNavigate, onPick,
+}: {
+  gs: ReturnType<typeof gettingStarted>
+  onAddMoney: () => void
+  onNavigate?: (s: Space) => void
+  onPick: (s: string) => void
+}) {
+  const steps = [
+    { key: 'fund', label: 'Add money to your account', desc: 'Fund your wallet to begin.', done: gs.funded, cta: 'Add money', action: onAddMoney },
+    { key: 'goal', label: 'Create your first savings goal', desc: 'Pick something to save toward.', done: gs.hasGoal, cta: 'Create', action: () => onNavigate?.('savings') },
+    { key: 'move', label: 'Make your first move', desc: 'Drag money into a goal, or send some.', done: gs.moved, cta: 'Try it', action: () => onNavigate?.('savings') },
+  ]
+  const doneCount = steps.filter((s) => s.done).length
+
+  return (
+    <div className="space-y-4">
+      <motion.div
+        initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={spring.soft}
+        className="rounded-[26px] bg-gradient-to-b from-accent/15 to-white/[0.02] ring-1 ring-white/10 p-5"
+      >
+        <div className="flex items-center gap-3">
+          <RobotMascot size={44} />
+          <div>
+            <p className="text-[16px] font-extrabold text-white">Welcome to Atlas 👋</p>
+            <p className="text-[13px] text-white/55">Three quick steps to get going · {doneCount} of 3 done</p>
+          </div>
+        </div>
+      </motion.div>
+
+      <div className="space-y-2.5">
+        {steps.map((s, i) => (
+          <button
+            key={s.key}
+            onClick={s.done ? undefined : s.action}
+            disabled={s.done}
+            className={`flex w-full items-center gap-3 rounded-2xl p-3.5 text-left transition ${s.done ? 'bg-white/[0.03]' : 'bg-white/[0.05] active:bg-white/[0.08]'}`}
+          >
+            <span className={`grid h-7 w-7 shrink-0 place-items-center rounded-full text-[13px] font-bold ${s.done ? 'bg-accent text-black' : 'bg-white/10 text-white/60'}`}>
+              {s.done ? '✓' : i + 1}
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className={`text-[14px] font-medium ${s.done ? 'text-white/40 line-through' : 'text-white'}`}>{s.label}</p>
+              {!s.done && <p className="text-[12px] text-white/45">{s.desc}</p>}
+            </div>
+            {!s.done && <span className="shrink-0 rounded-full bg-accent px-3.5 py-1.5 text-[12px] font-bold text-black">{s.cta}</span>}
+          </button>
+        ))}
+      </div>
+
+      <p className="px-2 pt-1 text-[12px] text-white/35">New here? Just ask…</p>
+      <div className="flex flex-wrap gap-2">
+        {['What can Atlas do?', 'How do I save money?'].map((s) => (
+          <button key={s} onClick={() => onPick(s)}
+            className="rounded-full border border-white/[0.12] px-3.5 py-2 text-[12.5px] text-white/75 active:bg-white/[0.05] transition">
+            {s}
+          </button>
+        ))}
+      </div>
     </div>
   )
 }

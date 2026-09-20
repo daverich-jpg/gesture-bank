@@ -63,10 +63,10 @@ function MainApp() {
             className="absolute inset-0"
             style={{ background: 'radial-gradient(120% 70% at 50% -15%, #141414 0%, #060606 50%, #000000 100%)' }}
           >
-            {space === 'hub' && <HubScreen />}
-            {space === 'money' && <MoneyScreen />}
+            {space === 'hub' && <HubScreen onNavigate={go} />}
+            {space === 'money' && <MoneyScreen onNavigate={go} />}
             {space === 'savings' && <SavingsScreen />}
-            {space === 'insights' && <InsightsScreen />}
+            {space === 'insights' && <InsightsScreen onNavigate={go} />}
           </motion.div>
         </div>
         <SpaceDock active={space} onChange={go} />

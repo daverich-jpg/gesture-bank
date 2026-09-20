@@ -15,6 +15,7 @@ const STEPS = [5000, 10000, 25000, 50000]
 export function SavingsScreen() {
   const { state, dispatch } = useStore()
   const ai = useAi()
+  const empty = state.goals.length === 0
   const [amount, setAmount] = useState(10000)
   const [hover, setHover] = useState<string | null>(null)
   const [flash, setFlash] = useState<string | null>(null)
@@ -52,9 +53,15 @@ export function SavingsScreen() {
     <div className="flex h-full flex-col">
       <div className="px-6 pt-3 pb-2">
         <h1 className="text-[30px] font-extrabold text-white tracking-tight">Spaces</h1>
-        <p className="mt-1 text-[13px] text-white/40">Drag the coin onto a goal · hold a goal to ask Atlas</p>
+        <p className="mt-1 text-[13px] text-white/40">
+          {empty ? 'Turn saving into something you can see and touch' : 'Drag the coin onto a goal · hold a goal to ask Atlas'}
+        </p>
       </div>
 
+      {empty ? (
+        <GoalTemplates onCreate={(t) => { haptic('commit'); dispatch({ type: 'addGoal', name: t.name, emoji: t.emoji, target: t.target, hue: t.hue }) }} />
+      ) : (
+      <>
       {/* Editable contribution amount + draggable money coin */}
       <div className="relative px-6 pb-3">
         <div className="rounded-2xl bg-white/[0.04] ring-1 ring-white/10 p-4">
@@ -134,6 +141,45 @@ export function SavingsScreen() {
         place="bottom-[104px] inset-x-4"
         arrow="none"
       />
+      </>
+      )}
+    </div>
+  )
+}
+
+type Template = { name: string; emoji: string; target: number; hue: number }
+const TEMPLATES: Template[] = [
+  { name: 'Emergency Fund', emoji: '🛟', target: 600000, hue: 205 },
+  { name: 'Vacation', emoji: '🏖️', target: 1200000, hue: 342 },
+  { name: 'New Laptop', emoji: '💻', target: 850000, hue: 152 },
+  { name: 'Rent', emoji: '🏠', target: 2000000, hue: 38 },
+]
+
+function GoalTemplates({ onCreate }: { onCreate: (t: Template) => void }) {
+  return (
+    <div className="hide-scroll flex-1 overflow-y-auto px-5 pb-[110px]">
+      <div className="rounded-[26px] bg-gradient-to-b from-accent/15 to-white/[0.02] ring-1 ring-white/10 p-5">
+        <p className="text-[15px] font-extrabold text-white">Create your first goal</p>
+        <p className="mt-1.5 text-[13px] leading-relaxed text-white/55">
+          A goal is a pocket of savings you can name and grow. Once it exists, just drag money onto it whenever you like.
+        </p>
+      </div>
+      <p className="px-1 pb-2 pt-5 text-[11px] font-semibold uppercase tracking-widest text-white/35">Popular goals</p>
+      <div className="grid grid-cols-2 gap-3">
+        {TEMPLATES.map((t) => (
+          <button
+            key={t.name}
+            onClick={() => onCreate(t)}
+            className="flex flex-col items-start gap-2 rounded-2xl p-4 text-left ring-1 ring-white/10 active:scale-[0.98] transition"
+            style={{ background: `linear-gradient(160deg, hsl(${t.hue} 40% 16%), rgba(255,255,255,0.02))` }}
+          >
+            <span className="text-2xl">{t.emoji}</span>
+            <span className="text-[14px] font-semibold text-white">{t.name}</span>
+            <span className="text-[11.5px] text-white/45">Target {shortNaira(t.target)}</span>
+            <span className="mt-1 rounded-full bg-accent px-3 py-1 text-[11px] font-bold text-black">+ Create</span>
+          </button>
+        ))}
+      </div>
     </div>
   )
 }

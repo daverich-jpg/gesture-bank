@@ -7,24 +7,39 @@ import { naira } from '../lib/format'
 import { motion } from 'framer-motion'
 import { spring } from '../lib/motion'
 import type { Category } from '../data/types'
-import { AtlasMark } from '../components/icons'
+import { AtlasMark, IconCoins } from '../components/icons'
 import { Coachmark } from '../onboarding/coach'
+import { EmptyState } from '../components/EmptyState'
 
-export function InsightsScreen() {
+export function InsightsScreen({ onNavigate: _onNavigate }: { onNavigate?: (s: 'hub' | 'money' | 'savings' | 'insights') => void }) {
   const { state } = useStore()
   const ai = useAi()
   const total = spentThisMonth(state)
   const byCat = spentByCategory(state)
   const subs = state.txns.filter((t) => t.recurring)
   const subTotal = subs.reduce((s, t) => s + Math.abs(t.amount), 0)
+  const empty = total === 0
 
   return (
     <div className="flex h-full flex-col">
       <div className="px-6 pt-3 pb-4">
         <h1 className="text-[30px] font-extrabold text-white tracking-tight">Insights</h1>
-        <p className="mt-1 text-[13px] text-white/40">Tap a card to expand · hold to ask</p>
+        <p className="mt-1 text-[13px] text-white/40">
+          {empty ? 'Atlas turns your activity into plain-language advice' : 'Tap a card to expand · hold to ask'}
+        </p>
       </div>
 
+      {empty && (
+        <EmptyState
+          icon={<IconCoins size={26} className="text-accent" />}
+          title="No insights yet"
+          body="Atlas watches your spending and surfaces what matters — trends, subscriptions and cash flow. They’ll appear here once money starts moving."
+          cta="Add money"
+          onCta={ai.addMoney}
+        />
+      )}
+
+      {!empty && (
       <div className="hide-scroll flex-1 space-y-3 overflow-y-auto px-4 pb-[96px]">
         {/* Spending trends */}
         <InsightShell hue={205} title="Spending this month" onAsk={() => ai.ask('How much did I spend this month?')}>
@@ -92,15 +107,18 @@ export function InsightsScreen() {
           </div>
         </InsightShell>
       </div>
+      )}
 
-      <Coachmark
-        id="insights"
-        title="Your money, explained"
-        body="These are Atlas’s read on your spending. Tap a card to see the full breakdown, or hold one to ask about it."
-        gesture="tap"
-        place="bottom-[104px] inset-x-4"
-        arrow="none"
-      />
+      {!empty && (
+        <Coachmark
+          id="insights"
+          title="Your money, explained"
+          body="These are Atlas’s read on your spending. Tap a card to see the full breakdown, or hold one to ask about it."
+          gesture="tap"
+          place="bottom-[104px] inset-x-4"
+          arrow="none"
+        />
+      )}
     </div>
   )
 }
